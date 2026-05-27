@@ -6,6 +6,21 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Phase 2: Agent core & live Devices (complete)
+- Privileged discovery agent in the Electron main process (`src/main/agent/`), built
+  as small single-purpose, dependency-injected modules: `subnet` (CIDR + bounded /24
+  host enumeration), `vendor` (offline MAC→manufacturer via `oui-data`), `classify`
+  (service/vendor/hostname → device class + icon), `store` (`Store` interface +
+  `InMemoryStore`, swappable for SQLite later), `discovery` (merges ARP + mDNS +
+  vendor + classification), `scheduler` (non-overlapping ~45s sweep), `probes` (OS
+  `arp` table parse + `systeminformation` gateway + `bonjour-service` mDNS), and `ipc`.
+- Typed IPC: `window.vanta.devices.list()` + a live `vanta:devices` push stream; the
+  **Devices** tab now shows real LAN devices (name/type/vendor/IP/MAC/online), keyed by
+  MAC, with loading/empty states. Honest substitutions per spec (`signal` = reachability).
+- Unprivileged + local-only by design; avoided `local-devices` (its `ip`/`get-ip-range`/
+  `ip-address` chain carried high-severity advisories). **0 vulnerabilities.**
+- Quality: lint + typecheck clean, 37 tests passing, build + Electron boot verified.
+
 ### Added — Phase 1: Electron foundation & UI port (complete)
 - Migrated the scaffold to the Electron two-process layout
   (`src/main` / `src/preload` / `src/renderer` / `src/shared`) via `electron-vite`.
