@@ -11,7 +11,11 @@ import { StubView } from './StubView'
 beforeEach(() => {
   ;(window as unknown as { vanta: unknown }).vanta = {
     ping: () => Promise.resolve('pong'),
-    devices: { list: () => Promise.resolve([]), subscribe: () => () => {} }
+    devices: { list: () => Promise.resolve([]), subscribe: () => () => {} },
+    stats: {
+      current: () => Promise.resolve({ rxMbps: 0, txMbps: 0, rxHistory: [], txHistory: [] }),
+      subscribe: () => () => {}
+    }
   }
 })
 

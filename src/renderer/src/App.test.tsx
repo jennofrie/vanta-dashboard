@@ -1,6 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import App from './App'
+
+beforeEach(() => {
+  ;(window as unknown as { vanta: unknown }).vanta = {
+    ping: () => Promise.resolve('pong'),
+    devices: { list: () => Promise.resolve([]), subscribe: () => () => {} },
+    stats: {
+      current: () => Promise.resolve({ rxMbps: 0, txMbps: 0, rxHistory: [], txHistory: [] }),
+      subscribe: () => () => {}
+    }
+  }
+})
 
 describe('App', () => {
   it('renders the brand and the dashboard by default', () => {
