@@ -66,3 +66,16 @@ export async function mdnsScan(windowMs = 2500): Promise<MdnsEntry[]> {
   bonjour.destroy()
   return [...byIp.values()].map((m) => ({ ...m, hostname: m.hostname.replace(/\.$/, '') }))
 }
+
+/** Current RX/TX throughput (Mbps) for the default interface, via systeminformation. */
+export async function netStats(): Promise<{ rxMbps: number; txMbps: number }> {
+  try {
+    const stats = await si.networkStats()
+    const s = stats[0]
+    if (!s) return { rxMbps: 0, txMbps: 0 }
+    const toMbps = (bytesPerSec: number) => Math.max(0, Math.round((bytesPerSec * 8) / 1e6 * 10) / 10)
+    return { rxMbps: toMbps(s.rx_sec ?? 0), txMbps: toMbps(s.tx_sec ?? 0) }
+  } catch {
+    return { rxMbps: 0, txMbps: 0 }
+  }
+}

@@ -1,11 +1,12 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import type { Device, DiscoveredHost } from '@shared/types'
+import type { Device, DiscoveredHost, NetStats } from '@shared/types'
 import { InMemoryStore } from './store'
 import { Scheduler } from './scheduler'
 import { discover } from './discovery'
 import { lookupVendor } from './vendor'
 import { labelsFor } from './classify'
-import { getGatewayIp, arpScan, mdnsScan } from './probes'
+import { getGatewayIp, arpScan, mdnsScan, netStats } from './probes'
+import { NetStatsAccumulator } from './netstats'
 
 function toDevice(h: DiscoveredHost): Device {
   const lastOctet = h.ip.split('.').pop() ?? '0'
@@ -18,7 +19,8 @@ function toDevice(h: DiscoveredHost): Device {
     ip: h.ip,
     online: h.online,
     signal: h.online ? 100 : 0, // reachability score (per spec substitution)
-    role
+    role,
+    vendor: h.vendor ?? undefined
   }
 }
 
@@ -45,5 +47,21 @@ export function startAgent(): { stop: () => void } {
 
   ipcMain.handle('vanta:devices:list', () => store.listHosts().map(toDevice))
   scheduler.start()
-  return { stop: () => scheduler.stop() }
+
+  const acc = new NetStatsAccumulator(12)
+  const statsScheduler = new Scheduler<NetStats>({
+    intervalMs: 3_000,
+    sweep: async () => {
+      const { rxMbps, txMbps } = await netStats()
+      acc.push(rxMbps, txMbps)
+      return acc.snapshot()
+    },
+    onResult: (stats) => {
+      for (const win of BrowserWindow.getAllWindows()) win.webContents.send('vanta:stats', stats)
+    }
+  })
+  ipcMain.handle('vanta:stats:current', () => acc.snapshot())
+  statsScheduler.start()
+
+  return { stop: () => { scheduler.stop(); statsScheduler.stop() } }
 }
