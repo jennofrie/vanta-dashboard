@@ -18,10 +18,10 @@ export function NetworkView() {
   return (
     <div className="content fade-in">
       <div className="vuln-grid">
-        <div className="stat"><div className="num">{devices.length}</div><div className="lbl">Devices</div><div className="trend up"><Icon name="arrow-up" size={10}/>+2 this week</div><Sparkline data={[devices.length]} color="var(--lime)"/></div>
-        <div className="stat"><div className="num">{stats.rxMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Ingress</div><div className="trend down"><Icon name="arrow-dn" size={10}/>−12% vs avg</div><Sparkline data={stats.rxHistory.length ? stats.rxHistory : [0]} color="var(--blue)"/></div>
-        <div className="stat"><div className="num">{stats.txMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Egress</div><div className="trend up"><Icon name="arrow-up" size={10}/>+8% vs avg</div><Sparkline data={stats.txHistory.length ? stats.txHistory : [0]} color="var(--amber)"/></div>
-        <div className="stat"><div className="num">{devices.filter((d) => !d.online).length}</div><div className="lbl">Anomalies</div><div className="trend up"><Icon name="arrow-up" size={10}/>+1 in last hr</div><Sparkline data={[0]} color="var(--red)"/></div>
+        <div className="stat"><div className="num">{devices.length}</div><div className="lbl">Devices</div><div className="trend">{devices.filter((d) => d.online).length} online</div><Sparkline data={[devices.length]} color="var(--lime)"/></div>
+        <div className="stat"><div className="num">{stats.rxMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Ingress</div><div className="trend">this host</div><Sparkline data={stats.rxHistory.length ? stats.rxHistory : [0]} color="var(--blue)"/></div>
+        <div className="stat"><div className="num">{stats.txMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Egress</div><div className="trend">this host</div><Sparkline data={stats.txHistory.length ? stats.txHistory : [0]} color="var(--amber)"/></div>
+        <div className="stat"><div className="num">{devices.filter((d) => !d.online).length}</div><div className="lbl">Anomalies</div><div className="trend">offline hosts</div><Sparkline data={[0]} color="var(--red)"/></div>
       </div>
 
       <div className="topology">
