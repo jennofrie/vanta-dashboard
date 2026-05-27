@@ -6,23 +6,33 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-The project is in its design-and-scaffolding phase. No application functionality is
-wired up yet.
-
-### Added
-- Project scaffold: Vite + React 19 + TypeScript.
-- Approved design specification for the local network security monitor
-  (`docs/superpowers/specs/2026-05-27-vanta-network-monitor-design.md`).
-- Project documentation: `README`, `CLAUDE.md`, `ARCHITECTURE`, `CONTRIBUTING`,
-  `SECURITY`, and this changelog.
+### Added — Phase 1: Electron foundation & UI port (complete)
+- Migrated the scaffold to the Electron two-process layout
+  (`src/main` / `src/preload` / `src/renderer` / `src/shared`) via `electron-vite`.
+- Electron main process with a single sandboxed window
+  (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`) and a typed
+  `contextBridge` preload exposing `window.vanta` (emitted as CommonJS `.cjs`).
+- Shared domain + IPC types in `src/shared` (`Device`, `Vuln`, `ThreatEvent`,
+  `SystemRow`, `ForecastPoint`, `NetworkNode/Edge`, `TopologyGraph`, `VantaBridge`).
+- Ported the VANTA dashboard UI from the prototype at verbatim/99% fidelity: global
+  stylesheet, `Icon`, charts (gauge, threat-forecast, sparkline, radar), all six views
+  (Dashboard, Network, Vulnerabilities, Devices, Threats, Alerts) + stub, and the app
+  shell with working nav.
+- Vitest + React Testing Library suite (20 tests) covering types, data, icons, charts,
+  views, and app navigation. Build and both TypeScript projects type-check clean.
 
 ### Planned (next)
-- Migrate the scaffold to the Electron two-process layout
-  (`renderer` / `preload` / `main` / `shared`).
-- Port the VANTA dashboard UI from the prototype at 99% visual fidelity.
 - Build the agent core (`discovery`, `store`, `ipc`, `scheduler`) → live **Devices**.
 - Wire **Network topology**, **Vulnerabilities**, then **Threats** (priority).
 - Wire the **Dashboard** and produce cross-platform installers.
+
+### Earlier — design & scaffolding
+- Project scaffold: Vite + React 19 + TypeScript.
+- Approved design specification
+  (`docs/superpowers/specs/2026-05-27-vanta-network-monitor-design.md`) and Phase 1
+  implementation plan (`docs/superpowers/plans/`).
+- Project documentation: `README`, `CLAUDE.md`, `ARCHITECTURE`, `CONTRIBUTING`,
+  `SECURITY`, and this changelog.
 
 ---
 

@@ -6,7 +6,7 @@
 
 **Turn your own network into a live security operations center — right from your desktop.**
 
-[![Status](https://img.shields.io/badge/status-in%20development-F5C518?style=for-the-badge)](./CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-Phase%201%20complete-2ea043?style=for-the-badge)](./CHANGELOG.md)
 [![Electron](https://img.shields.io/badge/Electron-2B2E3A?style=for-the-badge&logo=electron&logoColor=9FEAF9)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -120,7 +120,7 @@ npm run package  # build a distributable installer (once Electron is wired)
 
 - [x] Approved design spec + implementation plan
 - [x] Project scaffold & docs
-- [ ] **Phase 1** — Electron shell + 99% UI port
+- [x] **Phase 1** — Electron shell + 99% UI port
 - [ ] **Phase 2** — Agent core (discovery, store, scheduler) → live **Devices**
 - [ ] **Phase 3** — Network **Topology** from real hosts
 - [ ] **Phase 4** — **Vulnerabilities** (port scan + CVE mapping)
