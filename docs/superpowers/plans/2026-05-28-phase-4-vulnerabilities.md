@@ -10,9 +10,21 @@
 
 ---
 
+## ⚠️ Amendment (post-approval): CVE enrichment is LOCAL-ONLY
+
+Per user decision, the scan does NOT use `nmap --script vulners` or any online lookup
+(vulners sends service versions to vulners.com — against VANTA's no-cloud ethos). These
+supersede the per-task code below where they conflict:
+- **nmap usage = `nmap -sV -Pn -T4 <ip>` only** (service/version detection; no scripts, no network CVE lookups). Task 6 `runNmap` uses this exact command.
+- **Findings come solely from the heuristic port-risk table** (`findingsFromPorts`, Task 2). nmap only enriches each open port with a service/version string shown in the UI; it produces NO `CVE-*` findings.
+- **Task 4** parses `-sV` output into `OpenPort[]` (port/service/version) only — no CVE extraction. Treat it as `parseNmapServices(text): OpenPort[]` (drop the `cves` array + the CVE-line regex).
+- **Task 5** `runScan`: per host → port scan; if nmap available, enrich open ports with versions; `vulns = findingsFromPorts(hostId, openPorts)` ALWAYS; `worstSeverity` from those findings. (No CVE branch.)
+- **`severityFromCvss`** (Task 2) is NOT needed — omit it and its test.
+- Real CVE-IDs are deferred to a future offline CVE-DB phase. The Vulnerabilities tab shows `EXPOSURE-*` findings + service/version detail.
+
 ## Scope of this phase
 
-In: on-demand vulnerability scan (`scan.run()`), pure-Node TCP connect port scan, progressive `nmap`/`vulners` CVE enrichment, curated port-exposure findings for the no-nmap path, a `scan` IPC (run + current + subscribe), the **Vulnerabilities** tab wired to live findings (severity stat cards, filter, table, scan trigger/state), topology **`warn`/`red`** node states from scan severity, and **open ports** in the Network node-detail panel.
+In: on-demand vulnerability scan (`scan.run()`), pure-Node TCP connect port scan, `nmap -sV` service/version enrichment (local-only), curated port-exposure findings as the finding source, a `scan` IPC (run + current + subscribe), the **Vulnerabilities** tab wired to live findings (severity stat cards, filter, table, scan trigger/state), topology **`warn`/`red`** node states from scan severity, and **open ports** in the Network node-detail panel.
 
 Out (later phases): the Threats rule engine + Anomalies feed (Phase 5); durable SQLite history; scheduled/continuous deep scans; authenticated/credentialed scanning; remediation actions.
 
