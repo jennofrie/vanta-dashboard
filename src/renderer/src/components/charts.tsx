@@ -7,7 +7,7 @@ import type { ForecastPoint } from '@shared/types'
 function useAnimatedNumber(target: number, duration = 900) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    let s = performance.now();
+    const s = performance.now();
     const from = val;
     let raf = 0;
     const tick = (t: number) => {

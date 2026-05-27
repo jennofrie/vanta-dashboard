@@ -6,9 +6,10 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'out']),
+  // Renderer (browser) — the React UI
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/renderer/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -17,6 +18,20 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  // Main process, preload, shared types, and config files (Node)
+  {
+    files: [
+      'src/main/**/*.ts',
+      'src/preload/**/*.ts',
+      'src/shared/**/*.ts',
+      '*.config.ts',
+      '*.config.js',
+    ],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ])

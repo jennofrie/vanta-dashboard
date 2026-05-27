@@ -5,7 +5,7 @@ import { FORECAST, SYSTEMS } from '../data'
 import { SEV_CLASS } from './constants'
 
 export function DashboardView() {
-  const [systemFilter, _setSystemFilter] = useState("All systems");
+  const systemFilter = "All systems";
   const [refreshing, setRefreshing] = useState(false);
   const [scanning, setScanning] = useState(false);
 
