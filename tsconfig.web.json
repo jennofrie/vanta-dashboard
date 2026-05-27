@@ -13,6 +13,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "allowArbitraryExtensions": true,
     "paths": { "@shared/*": ["./src/shared/*"] },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
