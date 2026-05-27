@@ -7,7 +7,11 @@ export default defineConfig({
     build: { outDir: 'out/main' }
   },
   preload: {
-    build: { outDir: 'out/preload' }
+    // Sandboxed preloads must be CommonJS; emit .cjs (project is "type": "module").
+    build: {
+      outDir: 'out/preload',
+      rollupOptions: { output: { format: 'cjs', entryFileNames: 'index.cjs' } }
+    }
   },
   renderer: {
     root: 'src/renderer',
