@@ -29,6 +29,7 @@ export interface Device {
   online: boolean
   signal: number
   role: string
+  vendor?: string
 }
 
 export interface Vuln {
@@ -87,11 +88,22 @@ export interface DiscoveredHost {
   lastSeen: number
 }
 
+export interface NetStats {
+  rxMbps: number
+  txMbps: number
+  rxHistory: number[]
+  txHistory: number[]
+}
+
 export interface VantaBridge {
   ping(): Promise<'pong'>
   devices: {
     list(): Promise<Device[]>
     /** Subscribe to live device updates. Returns an unsubscribe fn. */
     subscribe(cb: (devices: Device[]) => void): () => void
+  }
+  stats: {
+    current(): Promise<NetStats>
+    subscribe(cb: (stats: NetStats) => void): () => void
   }
 }
