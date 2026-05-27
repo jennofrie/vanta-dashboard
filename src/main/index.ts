@@ -1,5 +1,6 @@
 import { join } from 'path'
 import { app, BrowserWindow, ipcMain } from 'electron'
+import { startAgent } from './agent/ipc'
 
 function createWindow(): void {
   const win = new BrowserWindow({
@@ -30,6 +31,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   ipcMain.handle('vanta:ping', () => 'pong' as const)
   createWindow()
+  startAgent()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

@@ -47,9 +47,13 @@ const VENDOR_CLASS: Array<[RegExp, DeviceClass]> = [
   [/raspberry/i, 'server']
 ]
 
+export function labelsFor(deviceClass: DeviceClass): { ico: string; type: string; role: string } {
+  return { ico: ICON[deviceClass], type: TYPE_LABEL[deviceClass], role: ROLE[deviceClass] }
+}
+
 export function classify(input: ClassifyInput): Classification {
   const cls = classifyClass(input)
-  return { deviceClass: cls, type: TYPE_LABEL[cls], role: ROLE[cls], ico: ICON[cls] }
+  return { deviceClass: cls, ...labelsFor(cls) }
 }
 
 function classifyClass(input: ClassifyInput): DeviceClass {
