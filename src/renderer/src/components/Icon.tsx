@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-interface IconProps extends SVGProps<SVGSVGElement> {
+interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'stroke'> {
   name: string
   size?: number
   stroke?: number
