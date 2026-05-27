@@ -95,6 +95,28 @@ export interface NetStats {
   txHistory: number[]
 }
 
+export interface OpenPort {
+  port: number
+  service: string | null
+  version: string | null
+}
+
+export interface HostScan {
+  mac: string
+  ip: string
+  openPorts: OpenPort[]
+  vulns: Vuln[]
+  worstSeverity: Severity | null
+}
+
+export interface ScanResult {
+  scanning: boolean
+  lastScanAt: number | null
+  nmapAvailable: boolean
+  vulns: Vuln[]
+  hosts: HostScan[]
+}
+
 export interface VantaBridge {
   ping(): Promise<'pong'>
   devices: {
@@ -105,5 +127,10 @@ export interface VantaBridge {
   stats: {
     current(): Promise<NetStats>
     subscribe(cb: (stats: NetStats) => void): () => void
+  }
+  scan: {
+    run(): Promise<void>
+    current(): Promise<ScanResult>
+    subscribe(cb: (result: ScanResult) => void): () => void
   }
 }
