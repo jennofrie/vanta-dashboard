@@ -23,6 +23,13 @@ Out (later phases): port scanning, vulnerabilities, the network topology view, t
 3. **Unprivileged discovery.** `local-devices` (ARP table, populated by its ping sweep) + `bonjour-service` (mDNS). No raw sockets, no sudo. Matches the spec's least-privilege posture.
 4. **Honest field substitutions (from the spec):** `Device.signal` is a **reachability score** (online → 100, offline → 0 for this phase; refined to latency-based later), since per-host Wi-Fi RSSI is unobtainable. `Device.role`/`type`/`ico` come from classification mapped onto the **existing icon set**. The Devices stat card "awaiting pair" → count of **unclassified** hosts.
 
+## Phase 1 review follow-ups (apply within the tasks below)
+
+These came out of the Phase 1 final code review; address them in the noted tasks:
+- **Stable list keys (Task 10):** key device cards by `d.mac`, NOT the array index. Live lists add/remove/reorder, and index keys make React attach state to the wrong card.
+- **Vendor fonts locally (harden before verification):** download Space Grotesk + JetBrains Mono into `src/renderer/public/fonts/` and `@font-face` them from `styles.css`, replacing the Google Fonts `<link>` in `index.html`. A sandboxed desktop app has no guaranteed network — remote fonts silently degrade fidelity offline.
+- **Renderer CSP (harden before verification):** add a `Content-Security-Policy` (meta tag in `index.html` or a `session` header in main) now that live IPC data flows; restrict to `'self'` + bundled assets.
+
 ## Target file structure (this phase)
 
 ```
@@ -908,7 +915,7 @@ export function useDevices(): { devices: Device[]; loading: boolean } {
 
 - [ ] **Step 5: Run to verify it passes** → PASS (1).
 
-- [ ] **Step 6: Modify `DevicesView.tsx`** — replace the static source with the live hook. Change `const [list, setList] = useState(DEVICES)` to `const { devices: list, loading } = useDevices()` and remove the `import { DEVICES } from '../data'`; add `import { useDevices } from '../hooks/useDevices'`. The `toggleOnline` handler operated on local state; since data is now live, replace the per-card Disconnect/Reconnect button's `onClick={() => toggleOnline(i)}` with a no-op placeholder `onClick={() => {}}` (real connect/disconnect is a later phase) and delete the now-unused `toggleOnline`/`setList`. Above the device grid, when `loading` is true render a single `<div className="device-meta">Scanning your network…</div>`, and when not loading and `list.length === 0` render `<div className="device-meta">No devices found yet.</div>`. Keep ALL other markup/classes identical. Keep the "Connect a device" tile.
+- [ ] **Step 6: Modify `DevicesView.tsx`** — replace the static source with the live hook. Change `const [list, setList] = useState(DEVICES)` to `const { devices: list, loading } = useDevices()` and remove the `import { DEVICES } from '../data'`; add `import { useDevices } from '../hooks/useDevices'`. The `toggleOnline` handler operated on local state; since data is now live, replace the per-card Disconnect/Reconnect button's `onClick={() => toggleOnline(i)}` with a no-op placeholder `onClick={() => {}}` (real connect/disconnect is a later phase) and delete the now-unused `toggleOnline`/`setList`. Above the device grid, when `loading` is true render a single `<div className="device-meta">Scanning your network…</div>`, and when not loading and `list.length === 0` render `<div className="device-meta">No devices found yet.</div>`. **Key each device card by `d.mac`, not the array index** (`key={d.mac}`) — live lists reorder/add/remove and index keys misattach React state (Phase 1 review). Keep ALL other markup/classes identical. Keep the "Connect a device" tile.
 - Update the stat cards to compute from the live `list` (total / online / offline). For the 4th card "Awaiting pair", change its number to the count of devices with `type === 'Unknown'` and keep its label text.
 
 - [ ] **Step 7: Update `views.test.tsx`** — `DevicesView` now needs `window.vanta`. Add a `beforeEach` in that file that sets `window.vanta` to a stub: `{ ping: vi.fn(), devices: { list: () => Promise.resolve([]), subscribe: () => () => {} } }`, and change the Devices test to assert the empty/heading state: `expect(screen.getByText('Connected Devices')).toBeInTheDocument()` still holds (the card title renders regardless). Remove the `Aurora Hub` assertion (that was static data). Run `npx vitest run src/renderer/src/views/views.test.tsx` → PASS.
