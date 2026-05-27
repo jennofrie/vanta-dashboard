@@ -11,7 +11,9 @@ describe('App', () => {
 
   it('switches to the Network view when its nav item is clicked', () => {
     render(<App />)
-    fireEvent.click(screen.getByText('Network'))
+    // Scope to the sidebar label: the default Dashboard also renders a
+    // "Network" connector row in the Connected Systems table.
+    fireEvent.click(screen.getByText('Network', { selector: '.nav-item span' }))
     expect(screen.getByText('Network Topology')).toBeInTheDocument()
   })
 })
