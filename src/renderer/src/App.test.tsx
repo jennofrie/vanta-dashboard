@@ -9,6 +9,11 @@ beforeEach(() => {
     stats: {
       current: () => Promise.resolve({ rxMbps: 0, txMbps: 0, rxHistory: [], txHistory: [] }),
       subscribe: () => () => {}
+    },
+    scan: {
+      run: () => Promise.resolve(),
+      current: () => Promise.resolve({ scanning: false, lastScanAt: null, nmapAvailable: false, vulns: [], hosts: [] }),
+      subscribe: () => () => {}
     }
   }
 })

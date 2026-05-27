@@ -15,6 +15,11 @@ beforeEach(() => {
     stats: {
       current: () => Promise.resolve({ rxMbps: 0, txMbps: 0, rxHistory: [], txHistory: [] }),
       subscribe: () => () => {}
+    },
+    scan: {
+      run: () => Promise.resolve(),
+      current: () => Promise.resolve({ scanning: false, lastScanAt: null, nmapAvailable: false, vulns: [], hosts: [] }),
+      subscribe: () => () => {}
     }
   }
 })
@@ -33,7 +38,6 @@ describe('views render with prototype data', () => {
   it('Vulnerabilities shows the active table', () => {
     render(<VulnerabilitiesView />)
     expect(screen.getByText('Active Vulnerabilities')).toBeInTheDocument()
-    expect(screen.getByText('CVE-2026-1042')).toBeInTheDocument()
   })
   it('Devices lists connected devices', () => {
     render(<DevicesView />)
