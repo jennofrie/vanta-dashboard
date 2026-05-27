@@ -1,94 +1,146 @@
-# VANTA — Local Network Security Monitor
+<div align="center">
 
-> A cross-platform desktop application that discovers the devices on your own local
-> network, scans them for vulnerabilities, maps your topology, and classifies network
-> activity into a live threat feed.
+# 🛡️ VANTA
 
-**Status:** 🟡 In development — design phase complete, implementation in progress.
-See [CHANGELOG.md](./CHANGELOG.md) for the current state.
+### Local Network Security Monitor
 
----
+**Turn your own network into a live security operations center — right from your desktop.**
 
-## Overview
+[![Status](https://img.shields.io/badge/status-in%20development-F5C518?style=for-the-badge)](./CHANGELOG.md)
+[![Electron](https://img.shields.io/badge/Electron-2B2E3A?style=for-the-badge&logo=electron&logoColor=9FEAF9)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
 
-VANTA is a security-operations dashboard for your **own** LAN. It runs entirely
-locally — no cloud, no telemetry, no data leaves your machine. A privileged local
-agent (the Electron main process) performs the network work; a sandboxed React UI
-renders it.
+![Platform](https://img.shields.io/badge/platform-macOS%20·%20Windows%20·%20Linux-555?style=flat-square)
+![License](https://img.shields.io/badge/license-Proprietary-critical?style=flat-square)
+![Runs locally](https://img.shields.io/badge/data-100%25%20local%20·%20no%20cloud-2ea043?style=flat-square)
 
-It is built around four working views plus a dashboard:
+<br/>
 
-| View | What it shows |
-|------|---------------|
-| **Dashboard** | Composite health score, host metrics, top-risk systems, threat-trend chart |
-| **Devices** | Every device discovered on your network, classified by type |
-| **Network** | Live topology — your gateway at the core, hosts radiating out |
-| **Vulnerabilities** | Per-host CVEs with CVSS scores and patch guidance |
-| **Threats** | A classified, real-time event feed of notable network activity |
+<img src="docs/assets/preview-dashboard.png" alt="VANTA security operations dashboard" width="860"/>
+
+<sub><i>Design preview — the interface VANTA is being built to, at 99% fidelity.</i></sub>
+
+</div>
 
 ---
 
-## Tech stack
+## What is VANTA?
 
-- **Desktop shell:** Electron + [`electron-vite`](https://electron-vite.org) + `electron-builder`
-- **UI (renderer):** React 19 · TypeScript · Vite
-- **Agent (main process):** TypeScript/Node — `systeminformation`, ARP/mDNS discovery,
-  `better-sqlite3`, optional `nmap` integration
-- **IPC:** typed `contextBridge` API (`window.vanta.*`), renderer fully sandboxed
+**VANTA is a cross-platform desktop app that turns your home or office LAN into a real-time security operations center.** It discovers every device on your network, scans them for known vulnerabilities, maps your topology as it changes, and classifies suspicious activity into an actionable threat feed.
 
-For the full architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md) and the design
-spec in [`docs/superpowers/specs/`](./docs/superpowers/specs/).
+Everything runs **locally** — a privileged on-device agent does the network work, while a sandboxed UI renders it. **No cloud, no telemetry, nothing leaves your machine.** VANTA only ever inspects the local subnet you're connected to, and performs **detection only** — it never exploits or alters your devices.
+
+> In one line: **see every device, every weakness, and every anomaly on your own network — without sending a single byte to the cloud.**
 
 ---
 
-## Getting started
+## ✨ Features
 
-> Requires Node.js 20+ and npm. Optional: `nmap` on `PATH` unlocks deep
-> service/version + CVE scanning (the app works without it at reduced depth).
+| | Capability | What it does |
+|---|---|---|
+| 🖥️ | **Dashboard** | Composite security-health gauge, live host metrics, top-risk systems, and a threat-trend forecast |
+| 📡 | **Devices** | Auto-discovers every device on your LAN (ARP + mDNS), classified by type and vendor |
+| 🌐 | **Network** | Live topology — your gateway at the core, hosts radiating out, compromised nodes pulsing red |
+| 🐞 | **Vulnerabilities** | Per-host CVEs with CVSS scores, severity, and patch guidance (deep scan via `nmap` when available) |
+| 🚨 | **Threats** | A real-time, classified event feed: new devices, risky ports, CVEs, gateway/DNS changes, anomalies |
+
+---
+
+## 🖼️ Screens
+
+<div align="center">
+
+| Network Topology | Vulnerabilities |
+|:---:|:---:|
+| <img src="docs/assets/preview-network.png" alt="Network topology" width="420"/> | <img src="docs/assets/preview-vulnerabilities.png" alt="Vulnerabilities" width="420"/> |
+
+| Live Threat Feed |
+|:---:|
+| <img src="docs/assets/preview-threats.png" alt="Live threat feed" width="860"/> |
+
+</div>
+
+---
+
+## 🧭 Architecture
+
+A two-process Electron app: a **sandboxed React renderer** (pure UI) talks through a **typed `contextBridge`** to a **privileged main-process agent** that does all the network work. See [ARCHITECTURE.md](./ARCHITECTURE.md) for detail.
+
+```mermaid
+flowchart TB
+    subgraph R["🖥️  Renderer — React UI (sandboxed)"]
+        UI["VANTA Dashboard<br/>6 views"]
+    end
+    subgraph P["🔌  Preload — typed contextBridge"]
+        API["window.vanta.*"]
+    end
+    subgraph M["⚙️  Main Process — Privileged Agent"]
+        SCH["scheduler"] --> DIS["discovery"]
+        DIS --> VEN["vendor (MAC→OUI)"]
+        DIS --> PS["portscan"] --> VUL["vulns (CVE map)"]
+        DIS --> TOP["topology"]
+        DIS --> THR["threats<br/>rule engine"]
+        THR --> ST[("SQLite store")]
+    end
+
+    UI <-->|IPC| API
+    API <-->|IPC| THR
+```
+
+---
+
+## 🛠️ Tech stack
+
+- **Desktop shell:** Electron · `electron-vite` · `electron-builder`
+- **UI:** React 19 · TypeScript · Vite
+- **Agent:** TypeScript/Node — `systeminformation`, ARP/mDNS discovery, `better-sqlite3`, optional `nmap`
+- **Quality:** Vitest + React Testing Library, ESLint, strict TypeScript
+
+---
+
+## 🚀 Getting started
+
+> Requires **Node.js 20+** and **npm**. Optional: install **`nmap`** for deep service/version + CVE scanning (the app works without it at reduced depth).
 
 ```bash
+git clone https://github.com/jennofrie/vanta-dashboard.git
+cd vanta-dashboard
 npm install      # install dependencies
-npm run dev      # run the app in development (HMR)
+npm run dev      # launch the app (HMR)
 npm run build    # type-check and build
-npm run package  # produce a distributable installer (once Electron is wired)
+npm test         # run the test suite
+npm run package  # build a distributable installer (once Electron is wired)
 ```
 
 ---
 
-## Project structure
+## 🗺️ Roadmap
 
-```
-vanta-dashboard/
-├─ src/
-│  ├─ renderer/     # React UI (the VANTA dashboard)
-│  ├─ main/         # Electron main process — the network Agent
-│  ├─ preload/      # typed contextBridge API surface
-│  └─ shared/       # TS types shared across processes (Host, Vuln, ThreatEvent…)
-├─ docs/
-│  └─ superpowers/specs/   # design specifications
-├─ ARCHITECTURE.md
-├─ CONTRIBUTING.md
-├─ SECURITY.md
-└─ CHANGELOG.md
-```
+- [x] Approved design spec + implementation plan
+- [x] Project scaffold & docs
+- [ ] **Phase 1** — Electron shell + 99% UI port
+- [ ] **Phase 2** — Agent core (discovery, store, scheduler) → live **Devices**
+- [ ] **Phase 3** — Network **Topology** from real hosts
+- [ ] **Phase 4** — **Vulnerabilities** (port scan + CVE mapping)
+- [ ] **Phase 5** — **Threats** rule engine (priority)
+- [ ] **Phase 6** — Dashboard wiring + cross-platform installers
 
-> Note: the `src/` layout above is the target structure. The repository currently
-> holds the Vite scaffold and is mid-migration to the Electron layout.
+See [CHANGELOG.md](./CHANGELOG.md) for current status and the [design spec](./docs/superpowers/specs/) for full detail.
 
 ---
 
-## Security & responsible use
+## 🔒 Security & responsible use
 
-VANTA only scans the **local subnet of your active network interface** and never
-reaches beyond it. Use it only on networks you own or are explicitly authorized to
-monitor. See [SECURITY.md](./SECURITY.md) for the full policy.
+VANTA scans **only the local subnet of your active interface** and never reaches beyond it. Use it only on networks you own or are explicitly authorized to monitor. It performs **detection and classification only** — no exploitation, no telemetry, no cloud. Full policy in [SECURITY.md](./SECURITY.md).
 
 ---
 
-## License
+## 📄 License
 
 Proprietary. © 2026 **JD Digital Systems**. All rights reserved.
 
----
-
-Created and maintained by **JD Digital Systems**.
+<div align="center">
+<sub>Designed & built by <b>JD Digital Systems</b></sub>
+</div>
