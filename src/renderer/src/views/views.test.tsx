@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { DashboardView } from './DashboardView'
 import { NetworkView } from './NetworkView'
@@ -7,6 +7,13 @@ import { DevicesView } from './DevicesView'
 import { ThreatsView } from './ThreatsView'
 import { AlertsView } from './AlertsView'
 import { StubView } from './StubView'
+
+beforeEach(() => {
+  ;(window as unknown as { vanta: unknown }).vanta = {
+    ping: () => Promise.resolve('pong'),
+    devices: { list: () => Promise.resolve([]), subscribe: () => () => {} }
+  }
+})
 
 describe('views render with prototype data', () => {
   it('Dashboard shows its cards', () => {
@@ -27,7 +34,6 @@ describe('views render with prototype data', () => {
   it('Devices lists connected devices', () => {
     render(<DevicesView />)
     expect(screen.getByText('Connected Devices')).toBeInTheDocument()
-    expect(screen.getByText('Aurora Hub')).toBeInTheDocument()
   })
   it('Threats shows the live feed', () => {
     render(<ThreatsView />)

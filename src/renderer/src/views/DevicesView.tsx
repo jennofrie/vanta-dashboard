@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import { Icon } from '../components/Icon'
-import { DEVICES } from '../data'
+import { useDevices } from '../hooks/useDevices'
 
 export function DevicesView() {
-  const [list, setList] = useState(DEVICES);
-  const toggleOnline = (i: number) => setList(l => l.map((d, j) => j === i ? { ...d, online: !d.online } : d));
+  const { devices: list, loading } = useDevices();
 
   return (
     <div className="content fade-in">
@@ -12,7 +10,7 @@ export function DevicesView() {
         <div className="stat"><div className="num">{list.length}</div><div className="lbl">Total devices</div></div>
         <div className="stat"><div className="num" style={{ color: "var(--lime)" }}>{list.filter(d => d.online).length}</div><div className="lbl">Online</div></div>
         <div className="stat"><div className="num" style={{ color: "var(--ink-mute)" }}>{list.filter(d => !d.online).length}</div><div className="lbl">Offline</div></div>
-        <div className="stat"><div className="num">2</div><div className="lbl">Awaiting pair</div></div>
+        <div className="stat"><div className="num">{list.filter(d => d.type === 'Unknown').length}</div><div className="lbl">Awaiting pair</div></div>
       </div>
 
       <div className="card">
@@ -24,9 +22,11 @@ export function DevicesView() {
           <button className="btn primary"><Icon name="plus" size={13}/> Connect device</button>
         </div>
 
+        {loading && <div className="device-meta">Scanning your network…</div>}
+        {!loading && list.length === 0 && <div className="device-meta">No devices found yet.</div>}
         <div className="dev-grid">
-          {list.map((d, i) => (
-            <div key={i} className="device">
+          {list.map((d) => (
+            <div key={d.mac} className="device">
               <div className="device-head">
                 <div className="device-icon"><Icon name={d.ico} size={18}/></div>
                 <div>
@@ -43,7 +43,7 @@ export function DevicesView() {
               </div>
               <div className="device-meta">MAC {d.mac}</div>
               <div className="device-actions">
-                <button onClick={() => toggleOnline(i)}>{d.online ? "Disconnect" : "Reconnect"}</button>
+                <button onClick={() => {}}>{d.online ? "Disconnect" : "Reconnect"}</button>
                 <button className="pri">Manage</button>
               </div>
             </div>
