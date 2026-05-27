@@ -1,12 +1,15 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import type { Device, DiscoveredHost, NetStats } from '@shared/types'
+import type { Device, DiscoveredHost, NetStats, OpenPort, ScanResult } from '@shared/types'
 import { InMemoryStore } from './store'
 import { Scheduler } from './scheduler'
 import { discover } from './discovery'
 import { lookupVendor } from './vendor'
 import { labelsFor } from './classify'
-import { getGatewayIp, arpScan, mdnsScan, netStats } from './probes'
+import { getGatewayIp, arpScan, mdnsScan, netStats, tcpProbe, hasNmap, runNmap } from './probes'
 import { NetStatsAccumulator } from './netstats'
+import { runScan } from './scan'
+import { scanHostPorts, COMMON_PORTS } from './portscan'
+import { parseNmapServices } from './nmap'
 
 function toDevice(h: DiscoveredHost): Device {
   const lastOctet = h.ip.split('.').pop() ?? '0'
@@ -62,6 +65,27 @@ export function startAgent(): { stop: () => void } {
   })
   ipcMain.handle('vanta:stats:current', () => acc.snapshot())
   statsScheduler.start()
+
+  let lastScan: ScanResult = { scanning: false, lastScanAt: null, nmapAvailable: false, vulns: [], hosts: [] }
+  const pushScan = () => {
+    for (const win of BrowserWindow.getAllWindows()) win.webContents.send('vanta:scan', lastScan)
+  }
+  const doScan = async () => {
+    if (lastScan.scanning) return
+    lastScan = { ...lastScan, scanning: true }
+    pushScan()
+    const devices = store.listHosts().map(toDevice)
+    const nmapAvailable = await hasNmap()
+    lastScan = await runScan(devices, {
+      now: Date.now,
+      nmapAvailable,
+      portScan: (ip) => scanHostPorts(ip, COMMON_PORTS, tcpProbe, { concurrency: 16, timeoutMs: 800 }),
+      nmapScan: async (ip): Promise<OpenPort[]> => parseNmapServices(await runNmap(ip))
+    })
+    pushScan()
+  }
+  ipcMain.handle('vanta:scan:run', () => { void doScan() })
+  ipcMain.handle('vanta:scan:current', () => lastScan)
 
   return { stop: () => { scheduler.stop(); statsScheduler.stop() } }
 }

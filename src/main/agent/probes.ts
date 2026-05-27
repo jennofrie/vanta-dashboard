@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import net from 'node:net'
 import si from 'systeminformation'
 import type { ArpEntry, MdnsEntry } from './discovery'
 
@@ -78,4 +79,43 @@ export async function netStats(): Promise<{ rxMbps: number; txMbps: number }> {
   } catch {
     return { rxMbps: 0, txMbps: 0 }
   }
+}
+
+/** TCP connect probe: resolves true if the port accepts a connection within timeoutMs. */
+export function tcpProbe(ip: string, port: number, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket()
+    let done = false
+    const finish = (open: boolean) => {
+      if (done) return
+      done = true
+      socket.destroy()
+      resolve(open)
+    }
+    socket.setTimeout(timeoutMs)
+    socket.once('connect', () => finish(true))
+    socket.once('timeout', () => finish(false))
+    socket.once('error', () => finish(false))
+    socket.connect(port, ip)
+  })
+}
+
+/** True if `nmap` is on PATH. */
+export async function hasNmap(): Promise<boolean> {
+  try {
+    await execFileAsync('nmap', ['--version'], { timeout: 4000 })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Run `nmap -sV` (service/version detection only — no scripts, no online lookups). */
+export async function runNmap(ip: string): Promise<string> {
+  const { stdout } = await execFileAsync(
+    'nmap',
+    ['-sV', '-Pn', '-T4', ip],
+    { timeout: 120_000, maxBuffer: 8 * 1024 * 1024 }
+  )
+  return stdout
 }
