@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Icon } from '../components/Icon'
 import { Sparkline } from '../components/charts'
 import { useTopology } from '../hooks/useTopology'
 import { useNetStats } from '../hooks/useNetStats'
 import { useDevices } from '../hooks/useDevices'
+import { useScan } from '../hooks/useScan'
 
 export function NetworkView() {
-  const { graph, loading } = useTopology()
+  const { result } = useScan()
+  const hostScans = useMemo(() => new Map(result.hosts.map((h) => [h.mac, h])), [result.hosts])
+  const { graph, loading } = useTopology(hostScans)
   const { devices } = useDevices()
   const stats = useNetStats()
   const NODES = graph.nodes
@@ -100,7 +103,7 @@ export function NetworkView() {
                   <div className="kv"><span className="k">Status</span><span className={`v ${sel.state === "red" ? "bad" : sel.state === "warn" ? "warn" : "ok"}`}>● {sel.state.toUpperCase()}</span></div>
                   <div className="kv"><span className="k">Reachability</span><span className="v">{selDevice?.online ? 'Online' : 'Offline'}</span></div>
                   <div className="kv"><span className="k">Vendor</span><span className="v">{selDevice?.vendor ?? '—'}</span></div>
-                  <div className="kv"><span className="k">Type</span><span className="v">{selDevice?.type ?? '—'}</span></div>
+                  <div className="kv"><span className="k">Open ports</span><span className="v">{result.hosts.find((h) => h.mac === sel?.id)?.openPorts.map((p) => p.port).join(', ') || '—'}</span></div>
                 </div>
               </>
             ) : (

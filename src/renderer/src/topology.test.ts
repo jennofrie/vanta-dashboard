@@ -38,4 +38,11 @@ describe('buildTopology', () => {
   it('returns empty graph for no devices', () => {
     expect(buildTopology([])).toEqual({ nodes: [], edges: [] })
   })
+
+  it('marks hosts red/warn from scan severity', () => {
+    const a = dev({ mac: 'A' })
+    const scans = new Map([['A', { mac: 'A', ip: '10.0.0.2', openPorts: [], vulns: [], worstSeverity: 'Critical' as const }]])
+    const { nodes } = buildTopology([dev({ mac: 'GW', role: 'Gateway' }), a], scans)
+    expect(nodes.find((n) => n.id === 'A')!.state).toBe('red')
+  })
 })
