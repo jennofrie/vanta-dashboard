@@ -6,6 +6,19 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Phase 3: Network topology from real hosts (complete)
+- Live **Network** tab: a gateway-rooted radial topology built from the real device
+  stream via a pure `buildTopology()` (gateway centre, hosts on a ring, star edges,
+  presence-based node state — `ok` online / `warn` offline; risk-driven `red` deferred
+  to later phases). Clickable nodes populate a detail panel with real fields
+  (Status / Reachability / Vendor / Type); per-host latency + open ports come later.
+- Interface throughput: a `stats` IPC backed by `systeminformation.networkStats()`
+  (this host's interface — honest substitution) with a rolling history; drives the
+  live Ingress/Egress cards + sparklines. Devices/Anomalies cards from the live list.
+- Replaced the prototype's fabricated stat-card trend deltas with honest descriptors.
+- `useTopology` + `useNetStats` hooks; `Device.vendor` surfaced over IPC.
+- Quality: lint + typecheck clean, 44 tests passing, build + Electron boot verified.
+
 ### Added — Phase 2: Agent core & live Devices (complete)
 - Privileged discovery agent in the Electron main process (`src/main/agent/`), built
   as small single-purpose, dependency-injected modules: `subnet` (CIDR + bounded /24
