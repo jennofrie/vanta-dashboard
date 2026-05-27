@@ -1,4 +1,9 @@
-import ouiData from 'oui-data'
+import { createRequire } from 'node:module'
+
+// oui-data's entry is index.json; load it via CJS require so the ESM main process
+// doesn't need an `import ... with { type: 'json' }` attribute at runtime.
+const requireCjs = createRequire(import.meta.url)
+const ouiData = requireCjs('oui-data') as Record<string, string>
 
 export type RawOuiLookup = (mac: string) => string | null
 

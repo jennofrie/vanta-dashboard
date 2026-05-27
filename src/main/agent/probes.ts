@@ -1,10 +1,15 @@
+import { createRequire } from 'node:module'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import si from 'systeminformation'
-import { Bonjour } from 'bonjour-service'
 import type { ArpEntry, MdnsEntry } from './discovery'
 
 const execFileAsync = promisify(execFile)
+
+// bonjour-service is CJS; a named ESM import fails at runtime in the externalized
+// main process, so load it via CJS require (types preserved via the cast).
+const requireCjs = createRequire(import.meta.url)
+const { Bonjour } = requireCjs('bonjour-service') as typeof import('bonjour-service')
 
 export async function getGatewayIp(): Promise<string | null> {
   try {
