@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { VantaBridge, Device, NetStats } from '@shared/types'
+import type { VantaBridge, Device, NetStats, ScanResult } from '@shared/types'
 
 const api: VantaBridge = {
   ping: () => ipcRenderer.invoke('vanta:ping'),
@@ -17,6 +17,15 @@ const api: VantaBridge = {
       const listener = (_e: unknown, stats: NetStats) => cb(stats)
       ipcRenderer.on('vanta:stats', listener)
       return () => ipcRenderer.removeListener('vanta:stats', listener)
+    }
+  },
+  scan: {
+    run: () => ipcRenderer.invoke('vanta:scan:run'),
+    current: () => ipcRenderer.invoke('vanta:scan:current'),
+    subscribe: (cb: (result: ScanResult) => void) => {
+      const listener = (_e: unknown, result: ScanResult) => cb(result)
+      ipcRenderer.on('vanta:scan', listener)
+      return () => ipcRenderer.removeListener('vanta:scan', listener)
     }
   }
 }
