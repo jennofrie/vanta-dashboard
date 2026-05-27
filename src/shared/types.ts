@@ -67,6 +67,31 @@ export interface TopologyGraph {
   edges: NetworkEdge[]
 }
 
+export const DEVICE_CLASSES = [
+  'router', 'server', 'phone', 'tv', 'camera', 'speaker', 'watch', 'laptop',
+  'printer', 'iot', 'unknown'
+] as const
+export type DeviceClass = (typeof DEVICE_CLASSES)[number]
+
+// Raw host as discovered/classified by the agent (superset of the UI Device).
+export interface DiscoveredHost {
+  ip: string
+  mac: string
+  hostname: string | null
+  vendor: string | null
+  online: boolean
+  latencyMs: number | null
+  deviceClass: DeviceClass
+  services: string[]
+  firstSeen: number
+  lastSeen: number
+}
+
 export interface VantaBridge {
   ping(): Promise<'pong'>
+  devices: {
+    list(): Promise<Device[]>
+    /** Subscribe to live device updates. Returns an unsubscribe fn. */
+    subscribe(cb: (devices: Device[]) => void): () => void
+  }
 }
