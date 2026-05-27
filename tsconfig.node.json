@@ -8,8 +8,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "strict": true,
-    "baseUrl": ".",
-    "paths": { "@shared/*": ["src/shared/*"] }
+    "paths": { "@shared/*": ["./src/shared/*"] }
   },
   "include": ["src/main", "src/preload", "src/shared", "electron.vite.config.ts", "vitest.config.ts"]
 }

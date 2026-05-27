@@ -13,8 +13,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "baseUrl": ".",
-    "paths": { "@shared/*": ["src/shared/*"] },
+    "paths": { "@shared/*": ["./src/shared/*"] },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src/renderer/src", "src/shared", "vitest.setup.ts"]
