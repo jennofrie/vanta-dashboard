@@ -6,6 +6,24 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Phase 4: Vulnerabilities — port scan + findings (complete)
+- On-demand vulnerability scan (the Vulnerabilities tab's **Run Scan** button): a
+  concurrency-limited pure-Node TCP **connect** scan over discovered hosts, enriched
+  with `nmap -sV` service/version detection when nmap is on PATH. Bounded common-port
+  list, connect-scan only, no privilege — safe self-assessment on your own LAN.
+- **Local-only by design** (per decision): no `nmap --script vulners`, no online
+  lookups, nothing leaves your machine. Findings are honest **port-exposure** entries
+  (`EXPOSURE-<port>`, severity from a curated port-risk table) — never fabricated CVE
+  ids. Real CVE-IDs are deferred to a future offline CVE-DB phase.
+- Vulnerabilities tab wired to live findings: computed severity stat cards, severity
+  filter, sortable findings table, scanning/empty states, and an nmap-availability hint.
+- Scan severity now drives the **topology** `warn`/`red` node states, and the Network
+  node-detail panel shows each host's real **open ports** (the Phase 3 deferrals).
+- `scan` IPC (`run`/`current`/`subscribe`) + `useScan` hook; pure, unit-tested engine
+  (port scan, nmap parser, orchestrator, port-risk findings).
+- Quality: lint + typecheck clean, 56 tests passing, build + Electron boot verified;
+  real `nmap -sV` output confirmed to match the parser.
+
 ### Added — Phase 3: Network topology from real hosts (complete)
 - Live **Network** tab: a gateway-rooted radial topology built from the real device
   stream via a pure `buildTopology()` (gateway centre, hosts on a ring, star edges,
