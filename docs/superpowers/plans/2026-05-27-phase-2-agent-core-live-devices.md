@@ -6,7 +6,7 @@
 
 **Architecture:** A privileged agent in the Electron main process. Small single-purpose modules under `src/main/agent/` (each unit takes injected dependencies so it is testable without a live network). A `scheduler` runs a cheap discovery sweep on an interval; results are diffed/merged into a `Store` and pushed to the renderer via IPC; the Devices view consumes them through `window.vanta`.
 
-**Tech Stack:** Electron + electron-vite (existing), TypeScript, `systeminformation` (gateway/interfaces), `local-devices` (ARP scan), `bonjour-service` (mDNS), `oui` (offline MAC→vendor), Vitest.
+**Tech Stack:** Electron + electron-vite (existing), TypeScript, `systeminformation` (gateway/interfaces), the OS `arp` table parsed directly via `child_process` (no `local-devices` — its `ip`/`get-ip-range`/`ip-address` chain carried high-severity advisories), `bonjour-service` (mDNS), `oui` (offline MAC→vendor), Vitest.
 
 ---
 
@@ -20,7 +20,7 @@ Out (later phases): port scanning, vulnerabilities, the network topology view, t
 
 1. **Persistence = in-memory behind an interface.** Define `Store` (interface) + `InMemoryStore`. SQLite (`better-sqlite3`) is deferred to the phase that needs durable history (Threats), and will implement the same `Store` interface so no consumer changes. Rationale: native modules need Electron rebuilds (friction with the beta toolchain) and Phase 2 needs no history yet (YAGNI).
 2. **Dependency injection for testability.** Discovery and the scheduler receive their I/O dependencies (an ARP-scan fn, an mDNS browser, a clock/timer, the store) as parameters. Unit tests inject fixtures/fakes — **no test touches the real network or real timers.**
-3. **Unprivileged discovery.** `local-devices` (ARP table, populated by its ping sweep) + `bonjour-service` (mDNS). No raw sockets, no sudo. Matches the spec's least-privilege posture.
+3. **Unprivileged discovery.** Parse the OS `arp` table directly via `child_process` + `bonjour-service` (mDNS). No raw sockets, no sudo, and no `local-devices` (its `ip`/`get-ip-range`/`ip-address` chain carried high-severity advisories — unacceptable for a security tool). An active ping sweep (using `enumerateHosts` from `subnet.ts`) is a deferred enhancement; Phase 2 reads the existing ARP cache + mDNS. Matches the spec's least-privilege posture.
 4. **Honest field substitutions (from the spec):** `Device.signal` is a **reachability score** (online → 100, offline → 0 for this phase; refined to latency-based later), since per-host Wi-Fi RSSI is unobtainable. `Device.role`/`type`/`ico` come from classification mapped onto the **existing icon set**. The Devices stat card "awaiting pair" → count of **unclassified** hosts.
 
 ## Phase 1 review follow-ups (apply within the tasks below)
@@ -69,10 +69,9 @@ src/
 - [ ] **Step 1: Install**
 ```bash
 cd /Users/sharan/Desktop/Github/vanta-dashboard
-npm install systeminformation local-devices bonjour-service oui
-npm install -D @types/oui
+npm install systeminformation bonjour-service oui
 ```
-(If `@types/oui` does not exist on the registry, skip it and add a local ambient declaration in Task 2 instead — report which happened.)
+Do NOT install `local-devices` — its `ip`/`get-ip-range`/`ip-address` chain has high-severity advisories. `probes.ts` (Task 9) parses the OS `arp` table directly. `@types/oui` does not exist on the registry; add a local ambient declaration in Task 4. Run `npm audit` and confirm **0 vulnerabilities**.
 
 - [ ] **Step 2: Verify install + that the project still builds**
 Run: `npm run build`
@@ -706,10 +705,13 @@ git commit -m "feat: add non-overlapping interval scheduler with immediate first
 
 - [ ] **Step 1: Create `src/main/agent/probes.ts`** (real adapters around the libraries):
 ```ts
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import si from 'systeminformation'
-import find from 'local-devices'
 import { Bonjour } from 'bonjour-service'
 import type { ArpEntry, MdnsEntry } from './discovery'
+
+const execFileAsync = promisify(execFile)
 
 export async function getGatewayIp(): Promise<string | null> {
   try {
@@ -719,9 +721,33 @@ export async function getGatewayIp(): Promise<string | null> {
   }
 }
 
+/** Normalize a MAC to uppercase, colon-separated, zero-padded octets. */
+function normalizeMac(mac: string): string {
+  return mac
+    .split(':')
+    .map((o) => o.padStart(2, '0'))
+    .join(':')
+    .toUpperCase()
+}
+
+/**
+ * Read the OS ARP table (`arp -a`). Parses macOS/Linux lines such as:
+ *   host (10.0.0.1) at 9c:4f:2:ee:11:1 on en0 ifscope [ethernet]
+ *   ? (10.0.0.5) at a4:b1:c2:d3:e4:f5 [ether] on eth0
+ * Lines without a complete IP+MAC (e.g. "(incomplete)") are skipped.
+ */
 export async function arpScan(): Promise<ArpEntry[]> {
-  const devices = await find()
-  return devices.map((d) => ({ ip: d.ip, mac: d.mac, name: d.name && d.name !== '?' ? d.name : null }))
+  const { stdout } = await execFileAsync('arp', ['-a'], { timeout: 5000 })
+  const out: ArpEntry[] = []
+  for (const line of stdout.split('\n')) {
+    const ipM = line.match(/\(([0-9]{1,3}(?:\.[0-9]{1,3}){3})\)/)
+    const macM = line.match(/\b([0-9a-fA-F]{1,2}(?::[0-9a-fA-F]{1,2}){5})\b/)
+    if (!ipM || !macM) continue
+    const nameM = line.match(/^(\S+)\s+\(/)
+    const name = nameM && nameM[1] !== '?' ? nameM[1]! : null
+    out.push({ ip: ipM[1]!, mac: normalizeMac(macM[1]!), name })
+  }
+  return out
 }
 
 /** Browse common mDNS service types for a short window, collect per-IP info. */
