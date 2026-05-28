@@ -14,6 +14,10 @@ beforeEach(() => {
       run: () => Promise.resolve(),
       current: () => Promise.resolve({ scanning: false, lastScanAt: null, nmapAvailable: false, vulns: [], hosts: [] }),
       subscribe: () => () => {}
+    },
+    threats: {
+      current: () => Promise.resolve({ events: [], activeCount: 0, lastUpdated: null }),
+      subscribe: () => () => {}
     }
   }
 })
