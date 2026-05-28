@@ -30,11 +30,8 @@ design spec under `docs/superpowers/specs/`.
   It talks to the agent only through `window.vanta.*`.
 - `src/preload/` — the typed `contextBridge` API surface. The only bridge between
   renderer and main.
-- `src/main/` — the privileged **Agent**: `discovery`, `vendor`, `portscan`, `vulns`,
-  `topology`, `threats`, `scheduler`, `store`, `ipc`. Each module is single-purpose
-  and independently testable.
-- `src/shared/` — TS interfaces shared across processes (`Host`, `Port`, `Vuln`,
-  `ThreatEvent`, `TopologyGraph`, IPC contracts).
+- `src/main/agent/` — the privileged **Agent**: `discovery`, `vendor`, `classify`, `portscan`, `nmap`, `severity`, `scan`, `rules`, `netstats`, `scheduler`, `probes`, `jsonFileStore`, `ipc`. Each module is single-purpose and independently testable.
+- `src/shared/` — TS interfaces shared across processes (`Device`, `DiscoveredHost`, `OpenPort`, `HostScan`, `ScanResult`, `Vuln`, `ThreatEvent`, `ThreatsState`, `TopologyGraph`, `NetStats`, `VantaBridge`).
 
 ## Conventions
 
@@ -57,10 +54,14 @@ design spec under `docs/superpowers/specs/`.
 - No telemetry, no cloud calls, no data exfiltration. Everything stays local.
 - Keep the renderer sandboxed: `contextIsolation: true`, `nodeIntegration: false`.
 
-## Status
+## Current state — all 6 phases complete
 
-Pre-implementation. Design spec is complete and approved; the repo is migrating from
-the Vite scaffold to the Electron layout. Check [CHANGELOG.md](./CHANGELOG.md).
+All tabs are live with real LAN data. Distributable installers are built via `npm run package` (`.dmg` for macOS, `.exe`/NSIS for Windows, `.AppImage` for Linux). Check [CHANGELOG.md](./CHANGELOG.md) for the full phase history.
+
+**Known pending items:**
+- `better-sqlite3` (SQLite) cannot compile for Electron 42 / Node 24.15.0 (V8 external-pointer API change; upstream PR #1475 open). `JsonFileStore` is the current persistent store; it will be replaced by `SqliteStore` when the fix lands via the existing `Store` interface.
+- No custom app icon yet (`resources/` dir is empty); electron-builder uses the default Electron icon.
+- Notarization not configured (needs Apple account setup for distribution outside direct install).
 
 ---
 

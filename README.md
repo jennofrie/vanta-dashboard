@@ -82,7 +82,7 @@ flowchart TB
         DIS --> PS["portscan"] --> VUL["vulns (CVE map)"]
         DIS --> TOP["topology"]
         DIS --> THR["threats<br/>rule engine"]
-        THR --> ST[("SQLite store")]
+        THR --> ST[("JSON store")]
     end
 
     UI <-->|IPC| API
@@ -95,7 +95,7 @@ flowchart TB
 
 - **Desktop shell:** Electron · `electron-vite` · `electron-builder`
 - **UI:** React 19 · TypeScript · Vite
-- **Agent:** TypeScript/Node — `systeminformation`, ARP/mDNS discovery, `better-sqlite3`, optional `nmap`
+- **Agent:** TypeScript/Node — `systeminformation`, ARP/mDNS discovery, JSON-backed persistent store, optional `nmap`
 - **Quality:** Vitest + React Testing Library, ESLint, strict TypeScript
 
 ---
