@@ -32,7 +32,7 @@ describe('views render with prototype data', () => {
   it('Dashboard shows its cards', () => {
     render(<DashboardView />)
     expect(screen.getByText('System Health')).toBeInTheDocument()
-    expect(screen.getByText('AI Threat Forecast')).toBeInTheDocument()
+    expect(screen.getByText('Threat Trend')).toBeInTheDocument()
     expect(screen.getByText('Connected Systems')).toBeInTheDocument()
   })
   it('Network shows the topology card', () => {

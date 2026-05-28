@@ -1,10 +1,21 @@
 import { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { HealthGauge, ThreatForecast, NetActivity } from '../components/charts'
-import { FORECAST, SYSTEMS } from '../data'
-import { SEV_CLASS } from './constants'
+import { useDevices } from '../hooks/useDevices'
+import { useNetStats } from '../hooks/useNetStats'
+import { useScan } from '../hooks/useScan'
+import { useThreats } from '../hooks/useThreats'
+import { useHealthScore } from '../hooks/useHealthScore'
+import { useForecast } from '../hooks/useForecast'
 
 export function DashboardView() {
+  const { devices } = useDevices()
+  const stats = useNetStats()
+  const { result: scan } = useScan()
+  const threats = useThreats()
+  const healthScore = useHealthScore()
+  const forecastData = useForecast()
+
   const systemFilter = "All systems";
   const [refreshing, setRefreshing] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -27,22 +38,22 @@ export function DashboardView() {
           <div className="metric-row">
             <div className="metric">
               <div className="metric-ico" style={{ color: "var(--lime)" }}><Icon name="cpu" size={11}/></div>
-              <div className="metric-val">65<span style={{ fontSize: 11, color: "var(--ink-mute)" }}>%</span></div>
-              <div className="metric-lbl">CPU</div>
+              <div className="metric-val">{stats.rxMbps}</div>
+              <div className="metric-lbl">RX Mb/s</div>
             </div>
             <div className="metric">
               <div className="metric-ico" style={{ color: "var(--blue)" }}><Icon name="ram" size={11}/></div>
-              <div className="metric-val">72<span style={{ fontSize: 11, color: "var(--ink-mute)" }}>%</span></div>
-              <div className="metric-lbl">RAM</div>
+              <div className="metric-val">{stats.txMbps}</div>
+              <div className="metric-lbl">TX Mb/s</div>
             </div>
             <div className="metric">
               <div className="metric-ico" style={{ color: "var(--violet)" }}><Icon name="disk" size={11}/></div>
-              <div className="metric-val">45<span style={{ fontSize: 11, color: "var(--ink-mute)" }}>%</span></div>
-              <div className="metric-lbl">Disk</div>
+              <div className="metric-val">{devices.length}</div>
+              <div className="metric-lbl">Devices</div>
             </div>
           </div>
 
-          <HealthGauge value={76} size={250}/>
+          <HealthGauge value={healthScore} size={250}/>
 
           <div className="kv-list">
             <div className="kv"><span className="k">Firewall</span><span className="v ok">● Active</span></div>
@@ -59,8 +70,8 @@ export function DashboardView() {
         <div className="card">
           <div className="card-head">
             <div>
-              <div className="card-title">AI Threat Forecast</div>
-              <div className="card-sub">15-day horizon · model v2.1</div>
+              <div className="card-title">Threat Trend</div>
+              <div className="card-sub">15-day rolling · live baseline</div>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <div className="legend">
@@ -72,10 +83,16 @@ export function DashboardView() {
               </button>
             </div>
           </div>
-          <ThreatForecast data={FORECAST}/>
+          <ThreatForecast data={forecastData}/>
           <div className="insight">
             <span className="tag">⚡ Insight</span>
-            <span>The system detects elevated risk of network intrusions; deviation (+17%) impacts <strong>Lock</strong> and <strong>Cloud</strong> connectors. Consider review of manual patch queue.</span>
+            <span>
+              {scan.vulns.length > 0
+                ? `Scan found ${scan.vulns.length} exposure finding(s). Review the Vulnerabilities tab and harden exposed services.`
+                : threats.events.length > 0
+                ? `Detected ${threats.events.length} network event(s). Review the Threats tab for details.`
+                : 'No findings detected. Run a scan on the Vulnerabilities tab to assess current exposure.'}
+            </span>
           </div>
         </div>
       </div>
@@ -98,32 +115,27 @@ export function DashboardView() {
               <th>Connector</th><th>Workload</th><th>Security score</th><th>Threats</th><th>Patches</th><th></th>
             </tr></thead>
             <tbody>
-              {SYSTEMS.map((s, i) => (
-                <tr key={i}>
-                  <td>
-                    <div className="conn">
-                      <div className="conn-ico"><Icon name={s.ico} size={13}/></div>
-                      <span style={{ fontWeight: 500 }}>{s.connector}</span>
-                    </div>
-                  </td>
-                  <td className="mono" style={{ fontSize: 12, color: "var(--ink-dim)" }}>{s.workload}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span className="mono" style={{ fontSize: 12 }}>{s.score}%</span>
-                      <div className={`bar ${s.state === "high" ? "red" : s.state === "med" ? "warn" : ""}`}>
-                        <i style={{ width: `${s.score}%` }}></i>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`sev ${SEV_CLASS[s.threats === "Med" ? "Medium" : s.threats]}`}>
-                      <span className="dot" style={{ width: 5, height: 5, boxShadow: "none" }}></span>{s.threats}
-                    </span>
-                  </td>
-                  <td className="mono" style={{ fontSize: 11.5, color: s.patches.includes("Up") ? "var(--lime)" : "var(--amber)" }}>{s.patches}</td>
-                  <td><button className="btn ghost" style={{ padding: "5px 8px" }}><Icon name="chevron" size={12}/></button></td>
-                </tr>
-              ))}
+              {devices.slice(0, 5).map((d) => {
+                const hostScan = scan.hosts.find((h) => h.mac === d.mac)
+                const worstSev = hostScan?.worstSeverity
+                const score = worstSev === 'Critical' ? 20 : worstSev === 'High' ? 50 : worstSev === 'Medium' ? 70 : 90
+                const scoreState = worstSev === 'Critical' || worstSev === 'High' ? 'high' : worstSev === 'Medium' ? 'med' : 'low'
+                const patchText = hostScan && hostScan.vulns.length > 0 ? `${hostScan.vulns.length} finding(s)` : 'Clear'
+                const patchColor = patchText === 'Clear' ? 'var(--lime)' : 'var(--amber)'
+                return (
+                  <tr key={d.mac}>
+                    <td><div className="conn"><div className="conn-ico"><Icon name={d.ico} size={13}/></div><span style={{ fontWeight: 500 }}>{d.type}</span></div></td>
+                    <td className="mono" style={{ fontSize: 12, color: "var(--ink-dim)" }}>{d.name}</td>
+                    <td><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span className="mono" style={{ fontSize: 12 }}>{score}%</span><div className={`bar ${scoreState === 'high' ? 'red' : scoreState === 'med' ? 'warn' : ''}`}><i style={{ width: `${score}%` }}></i></div></div></td>
+                    <td><span className={`sev ${worstSev === 'Critical' ? 'crit' : worstSev === 'High' ? 'high' : worstSev === 'Medium' ? 'med' : 'low'}`}><span className="dot" style={{ width: 5, height: 5, boxShadow: "none" }}></span>{worstSev ?? 'Low'}</span></td>
+                    <td className="mono" style={{ fontSize: 11.5, color: patchColor }}>{patchText}</td>
+                    <td><button className="btn ghost" style={{ padding: "5px 8px" }}><Icon name="chevron" size={12}/></button></td>
+                  </tr>
+                )
+              })}
+              {devices.length === 0 && (
+                <tr><td colSpan={6} className="mono" style={{ textAlign: 'center', color: 'var(--ink-mute)', fontSize: 11.5 }}>Scanning your network…</td></tr>
+              )}
             </tbody>
           </table>
         </div>
