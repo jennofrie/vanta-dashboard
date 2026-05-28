@@ -117,6 +117,17 @@ export interface ScanResult {
   hosts: HostScan[]
 }
 
+export const THREAT_RULES = [
+  'NEW_DEVICE', 'DEVICE_OFFLINE', 'RISKY_EXPOSURE', 'NEW_OPEN_PORT', 'GATEWAY_CHANGE'
+] as const
+export type ThreatRule = (typeof THREAT_RULES)[number]
+
+export interface ThreatsState {
+  events: ThreatEvent[]
+  activeCount: number
+  lastUpdated: number | null
+}
+
 export interface VantaBridge {
   ping(): Promise<'pong'>
   devices: {
@@ -132,5 +143,9 @@ export interface VantaBridge {
     run(): Promise<void>
     current(): Promise<ScanResult>
     subscribe(cb: (result: ScanResult) => void): () => void
+  }
+  threats: {
+    current(): Promise<ThreatsState>
+    subscribe(cb: (state: ThreatsState) => void): () => void
   }
 }
