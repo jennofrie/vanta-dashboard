@@ -5,6 +5,7 @@ import { useTopology } from '../hooks/useTopology'
 import { useNetStats } from '../hooks/useNetStats'
 import { useDevices } from '../hooks/useDevices'
 import { useScan } from '../hooks/useScan'
+import { useThreats } from '../hooks/useThreats'
 
 export function NetworkView() {
   const { result } = useScan()
@@ -12,6 +13,7 @@ export function NetworkView() {
   const { graph, loading } = useTopology(hostScans)
   const { devices } = useDevices()
   const stats = useNetStats()
+  const { activeCount } = useThreats()
   const NODES = graph.nodes
   const EDGES = graph.edges
   const [selected, setSelected] = useState<string | null>(null)
@@ -24,7 +26,7 @@ export function NetworkView() {
         <div className="stat"><div className="num">{devices.length}</div><div className="lbl">Devices</div><div className="trend">{devices.filter((d) => d.online).length} online</div><Sparkline data={[devices.length]} color="var(--lime)"/></div>
         <div className="stat"><div className="num">{stats.rxMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Ingress</div><div className="trend">this host</div><Sparkline data={stats.rxHistory.length ? stats.rxHistory : [0]} color="var(--blue)"/></div>
         <div className="stat"><div className="num">{stats.txMbps}<span style={{ fontSize: 13, color: "var(--ink-mute)" }}> Mb/s</span></div><div className="lbl">Egress</div><div className="trend">this host</div><Sparkline data={stats.txHistory.length ? stats.txHistory : [0]} color="var(--amber)"/></div>
-        <div className="stat"><div className="num">{devices.filter((d) => !d.online).length}</div><div className="lbl">Anomalies</div><div className="trend">offline hosts</div><Sparkline data={[0]} color="var(--red)"/></div>
+        <div className="stat"><div className="num">{activeCount}</div><div className="lbl">Anomalies</div><div className="trend">active threats</div><Sparkline data={[0]} color="var(--red)"/></div>
       </div>
 
       <div className="topology">
