@@ -6,6 +6,22 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Phase 6: Dashboard wiring + packaging (complete)
+- **Dashboard** fully live: composite health score (0–100 from vuln penalties + active
+  threats) drives the animated gauge; **Threat Trend** chart backed by a 15-day rolling
+  event-count baseline (renamed from "AI Threat Forecast" — honest, no ML model);
+  Connected Systems table from real discovered devices + scan findings; network metrics
+  (RX/TX Mb/s + device count); live insight callout.
+- **Vendored fonts** — Space Grotesk + JetBrains Mono bundled via `@fontsource`; the
+  Google Fonts `<link>` is removed. Dashboard renders correctly **offline**.
+- **Renderer CSP** — `Content-Security-Policy` meta tag (`self`-only, `unsafe-inline`
+  for inline styles). Closes the last open security gap in the renderer sandbox.
+- **electron-builder** — `electron-builder.yml` configured for `.dmg` (macOS arm64 +
+  x64), `.nsis`/`.exe` (Windows x64/ia32), `.AppImage` (Linux x64). First successful
+  packaging run: `VANTA-0.1.0-arm64.dmg` (115 MB) + `VANTA-0.1.0.dmg` (123 MB),
+  auto-signed with Apple Developer certificate. App is now a distributable installer.
+- Quality: lint + typecheck clean, 75 tests passing, build + Electron boot verified.
+
 ### Added — Phase 5: Threats rule engine + persistent store (complete)
 - Pure, DI-testable threat rule engine (`applyRules`) with 5 rules: **NEW_DEVICE**,
   **DEVICE_OFFLINE**, **RISKY_EXPOSURE** (new exposure finding), **NEW_OPEN_PORT**,
