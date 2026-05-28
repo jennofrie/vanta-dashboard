@@ -6,6 +6,21 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — Phase 5: Threats rule engine + persistent store (complete)
+- Pure, DI-testable threat rule engine (`applyRules`) with 5 rules: **NEW_DEVICE**,
+  **DEVICE_OFFLINE**, **RISKY_EXPOSURE** (new exposure finding), **NEW_OPEN_PORT**,
+  **GATEWAY_CHANGE**. Fires on every discovery cycle and on-demand scan completion.
+- `JsonFileStore` — JSON-backed persistent store (`userData/vanta-state.json`) that
+  survives app restarts; implements the `Store` interface (host state, delta snapshots,
+  threat events, last gateway IP). Replaces `InMemoryStore` in the agent. SQLite
+  (`better-sqlite3`) deferred: cannot compile for Electron 42 / Node 24.15.0 (V8 ext
+  API change; upstream PR #1475 pending merge). `JsonFileStore` will be swapped for
+  `SqliteStore` when the fix lands with zero consumer changes.
+- `vanta:threats` IPC: push channel + `vanta:threats:current` on-demand handler.
+  `useThreats` hook; live **Threats** tab feed; real **Anomalies** count on the Network
+  tab (Critical + High active events, replacing the offline-count placeholder).
+- Quality: lint + typecheck + 69 tests + build + 0 vulns + Electron boot verified.
+
 ### Added — Phase 4: Vulnerabilities — port scan + findings (complete)
 - On-demand vulnerability scan (the Vulnerabilities tab's **Run Scan** button): a
   concurrency-limited pure-Node TCP **connect** scan over discovered hosts, enriched
