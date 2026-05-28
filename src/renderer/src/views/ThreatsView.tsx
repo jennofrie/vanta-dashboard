@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { THREATS_FEED } from '../data'
 import { SEV_DOT, SEV_CLASS } from './constants'
+import { useThreats } from '../hooks/useThreats'
 
 export function ThreatsView() {
+  const { events: THREATS_FEED, lastUpdated } = useThreats()
   const [sev, setSev] = useState("All");
   const filtered = sev === "All" ? THREATS_FEED : THREATS_FEED.filter(t => t.sev === sev);
   return (
@@ -18,7 +19,7 @@ export function ThreatsView() {
         <div className="card-head">
           <div>
             <div className="card-title">Live Threat Feed</div>
-            <div className="card-sub">streaming · last 24 hr</div>
+            <div className="card-sub">streaming · live</div>
           </div>
           <div className="filter-bar">
             {["All", "Critical", "High", "Medium", "Low"].map(s => (
@@ -29,6 +30,11 @@ export function ThreatsView() {
         <div style={{ display: "grid", gridTemplateColumns: "18px 80px 1fr 110px 110px 80px", gap: 14, padding: "0 12px 10px", borderBottom: "1px solid var(--border)", fontSize: 10.5, color: "var(--ink-mute)", textTransform: "uppercase", letterSpacing: ".1em" }}>
           <span></span><span>Source</span><span>Event</span><span>Region</span><span>Severity</span><span>Time</span>
         </div>
+        {filtered.length === 0 && (
+          <div className="card-sub">
+            {lastUpdated ? 'No threat events detected.' : 'Monitoring your network — events appear here when detected.'}
+          </div>
+        )}
         {filtered.map((t, i) => (
           <div key={i} className="thr-row">
             <span className={`dot ${SEV_DOT[t.sev] || ""}`}></span>
