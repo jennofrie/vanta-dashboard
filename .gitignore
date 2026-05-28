@@ -12,6 +12,7 @@ dist
 dist-ssr
 out
 *.local
+resources/
 
 # Editor directories and files
 .vscode/*
